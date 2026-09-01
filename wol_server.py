@@ -12,7 +12,7 @@ import py_compile
 import urllib.request
 import urllib.error
 
-VERSION = "2.4.2"
+VERSION = "2.4.3"
 GITHUB_REPO = "obipepenobi-hub/pc-steuerung"
 
 SCRIPT_PATH = os.path.abspath(__file__)
