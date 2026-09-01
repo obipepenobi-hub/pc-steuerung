@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+secret_key.txt
+wol_history.json

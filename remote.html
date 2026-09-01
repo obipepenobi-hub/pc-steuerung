@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Meine PCs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #101120;
+    --bg-grad: radial-gradient(1100px 700px at 50% -10%, #1d2036 0%, #101120 60%);
+    --ink: #e9e9ed;
+    --ink-dim: rgba(233,233,237,.6);
+    --ink-faint: rgba(233,233,237,.4);
+    --fine: #5b93e0;
+    --fine-chip-bg: rgba(91,147,224,.14);
+    --fine-chip-edge: rgba(91,147,224,.35);
+    --liam: #e09657;
+    --liam-chip-bg: rgba(224,150,87,.14);
+    --liam-chip-edge: rgba(224,150,87,.35);
+    --ok: #7fd39a;
+    --warn: #e0a05b;
+    --accent: #9b8cf0;
+    --accent-bg: rgba(155,140,240,.14);
+    --accent-edge: rgba(155,140,240,.35);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .screen {
+    min-height: 100vh;
+    background: var(--bg-grad);
+    padding: 18px 16px 40px;
+    max-width: 460px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  .top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-top: 6px;
+  }
+  .top .eyebrow { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .top .title { font-size: 27px; font-weight: 500; letter-spacing: -.02em; margin-top: 2px; }
+  .top .right { text-align: right; }
+  .top .right .eyebrow { font-size: 10px; letter-spacing: .09em; }
+  .top .right .value { font-size: 16px; font-weight: 500; margin-top: 2px; }
+
+  .card {
+    border-radius: 16px;
+    padding: 15px 15px 13px;
+    background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 8px 24px rgba(0,0,0,.4);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card .rail {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    transition: opacity .3s;
+  }
+  .card .head { display: flex; align-items: center; gap: 10px; }
+  .card .chip {
+    width: 34px; height: 34px; border-radius: 10px;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .card .name { font-size: 16px; font-weight: 500; letter-spacing: -.01em; }
+  .card .status-row { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+  .card .dot { width: 6px; height: 6px; border-radius: 50%; transition: background .3s; }
+  .card .status-text { font-size: 11.5px; color: var(--ink-dim); }
+  .card .net {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px; flex-shrink: 0;
+  }
+  .card .clock-row { display: flex; align-items: baseline; gap: 8px; }
+  .card .clock { font-size: 32px; font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .card .clock-note { font-size: 11px; color: var(--ink-faint); padding-bottom: 5px; }
+  .card .tiles { display: flex; gap: 8px; }
+  .card .tile { flex: 1; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.035); min-width: 0; }
+  .card .tile .label { font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint); }
+  .card .tile .value { font-size: 13.5px; margin-top: 2px; }
+
+  .action {
+    position: relative; overflow: hidden; width: 100%; min-height: 46px;
+    border-radius: 12px; border: 1px solid; font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer; touch-action: none; user-select: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .18s ease, filter .18s ease; background: none;
+  }
+  .action:active { filter: brightness(1.15); }
+  .action:disabled { cursor: default; }
+  .action .fill { position: absolute; left: 0; top: 0; bottom: 0; opacity: .28; width: 0%; transition: width .09s linear; }
+  .action .label { position: relative; }
+
+  .history-card { border-radius: 16px; padding: 14px 15px 12px; background: rgba(255,255,255,.035); box-shadow: 0 0 0 1px rgba(255,255,255,.06); display: flex; flex-direction: column; gap: 12px; }
+  .history-head { display: flex; align-items: center; justify-content: space-between; }
+  .history-head .title { font-size: 13px; font-weight: 500; }
+  .legend { display: flex; gap: 10px; }
+  .legend span { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--ink-dim); }
+  .legend i { width: 7px; height: 7px; border-radius: 2px; display: block; }
+  .bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; height: 104px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar-pair { display: flex; align-items: flex-end; gap: 3px; height: 82px; }
+  .bar { width: 9px; border-radius: 3px 3px 1px 1px; }
+  .bar-day-label { font-size: 9.5px; }
+  .history-foot { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-faint); padding-top: 2px; }
+
+  .hint { text-align: center; font-size: 10.5px; color: rgba(233,233,237,.3); padding-top: 2px; }
+
+  .ghost-update {
+    align-self: center;
+    font-size: 12px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 6px 4px;
+    cursor: pointer;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .toast {
+    position: fixed; left: 16px; right: 16px; bottom: 24px;
+    max-width: 428px; margin: 0 auto;
+    padding: 11px 14px; border-radius: 12px;
+    background: rgba(30,32,48,.92); backdrop-filter: blur(12px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 10px 30px rgba(0,0,0,.5);
+    font-size: 12.5px; text-align: center; color: var(--ink);
+    opacity: 0; pointer-events: none; transition: opacity .25s ease;
+  }
+  .toast.show { opacity: 1; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center;
+    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+    background: rgba(16,17,32,.62); backdrop-filter: blur(6px);
+    z-index: 30;
+  }
+  .modal {
+    width: 100%; max-width: 428px;
+    display: flex; flex-direction: column; gap: 16px;
+    padding: 22px; border-radius: 16px;
+    background: #1a1c2c;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 20px 50px rgba(0,0,0,.55);
+  }
+  .modal-head { display: flex; align-items: center; gap: 12px; }
+  .modal-chip { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent-edge); flex-shrink: 0; }
+  .modal-head .name { font-size: 16px; font-weight: 500; }
+  .modal-head .sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
+  .tag-new { font-size: 10px; letter-spacing: .05em; padding: 3px 8px; border-radius: 6px; background: var(--accent-bg); color: var(--accent); flex-shrink: 0; }
+  .modal-intro { font-size: 12.5px; color: rgba(233,233,237,.72); line-height: 1.5; }
+  .modal-notes { display: flex; flex-direction: column; gap: 8px; }
+  .modal-notes div { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.5; }
+  .modal-notes span.dash { color: var(--accent); flex-shrink: 0; }
+  .progress-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .25s linear; }
+  .progress-msg { font-size: 11px; color: var(--ink-faint); margin-top: 8px; }
+  .modal-buttons { display: flex; gap: 10px; margin-top: 2px; }
+  .btn { min-height: 42px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid transparent; font-family: 'Inter', system-ui, sans-serif; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn-secondary { flex: 1; background: rgba(255,255,255,.05); color: var(--ink); border-color: rgba(255,255,255,.1); }
+  .btn-primary { flex: 1.35; background: var(--accent); color: #17122c; }
+  .modal-foot { font-size: 10.5px; text-align: center; color: rgba(233,233,237,.35); }
+</style>
+</head>
+<body>
+
+<div class="screen" id="screen">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Zuhause</div>
+      <div class="title">Meine PCs</div>
+    </div>
+    <div class="right">
+      <div class="eyebrow">Heute</div>
+      <div class="value mono" id="totalCostToday">–</div>
+    </div>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="history-card">
+    <div class="history-head">
+      <div class="title">Laufzeit, letzte 7 Tage</div>
+      <div class="legend">
+        <span><i style="background:var(--fine)"></i>Fine</span>
+        <span><i style="background:var(--liam)"></i>Liam</span>
+      </div>
+    </div>
+    <div class="bars" id="bars"></div>
+    <div class="history-foot">
+      <span id="avgPerDay">Ø – pro Tag</span>
+      <span id="weekCost">– Strom diese Woche</span>
+    </div>
+  </div>
+
+  <div id="ghostUpdateSlot"></div>
+
+  <div class="hint" id="hint">–</div>
+</div>
+
+<div id="modalSlot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// Key kommt aus der URL (?key=...) - so ist sowohl die Seite selbst als auch
+// jeder API-Aufruf mit demselben Link abgesichert. Server liefert diese Seite
+// nur aus, wenn der Key stimmt.
+const KEY = new URLSearchParams(location.search).get('key') || '';
+
+const H = 3600000;
+const POLL_MS = 5000;
+const HOLD_MS = 1400;
+const BOOT_TIMEOUT_MS = 90000;
+const SHUTDOWN_TIMEOUT_MS = 60000;
+const UPDATE_CHECK_MS = 30 * 60 * 1000;
+
+const PC_META = {
+  fine: { name: "Fine PC", color: "var(--fine)", chipBg: "var(--fine-chip-bg)", chipEdge: "var(--fine-chip-edge)" },
+  liam: { name: "Liam PC", color: "var(--liam)", chipBg: "var(--liam-chip-bg)", chipEdge: "var(--liam-chip-edge)" }
+};
+const PC_ICON = '<svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor"><path d="M208 40H48A24 24 0 0 0 24 64v96a24 24 0 0 0 24 24h64v24H88a8 8 0 0 0 0 16h80a8 8 0 0 0 0-16h-24v-24h64a24 24 0 0 0 24-24V64a24 24 0 0 0-24-24Zm8 120a8 8 0 0 1-8 8H48a8 8 0 0 1-8-8V64a8 8 0 0 1 8-8h160a8 8 0 0 1 8 8Z"></path></svg>';
+const UPDATE_ICON = '<svg width="19" height="19" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a104 104 0 1 0 104 104A104.1 104.1 0 0 0 128 24Zm0 192a88 88 0 1 1 88-88 88.1 88.1 0 0 1-88 88Zm45.7-117.7a8 8 0 0 1 0 11.4l-40 40a8 8 0 0 1-11.4 0l-40-40a8 8 0 0 1 11.4-11.4L128 132.7l34.3-34.4a8 8 0 0 1 11.4 0Z"></path></svg>';
+
+// Live-Zustand pro PC: server-gemeldete Werte + optimistische Uebergangs-Overrides
+const live = {
+  fine: { online: false, sessionSince: null, todayMs: 0, polledAt: Date.now(), override: null, overrideSince: 0 },
+  liam: { online: false, sessionSince: null, todayMs: 0, polledAt: Date.now(), override: null, overrideSince: 0 }
+};
+let history = [];
+let config = { fineWatt: 185, liamWatt: 95, kwhPrice: 0.35 };
+
+let hold = null;      // pc key currently being held
+let holdPct = 0;
+let holdRaf = null;
+let holdStart = 0;
+
+// Update-Zustand
+const upd = {
+  open: false, pending: false, dismissedVersion: null,
+  currentVersion: null, latestVersion: null, notes: [],
+  phase: 'idle', pct: 0, message: ''
+};
+let progressTimer = null;
+
+function fmtClock(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const p = (n) => String(n).padStart(2, "0");
+  return p(Math.floor(s / 3600)) + ":" + p(Math.floor(s / 60) % 60) + ":" + p(s % 60);
+}
+function fmtHours(ms) {
+  const h = ms / H;
+  return (h < 10 ? h.toFixed(1) : Math.round(h)) + " h";
+}
+function fmtEur(v) { return v.toFixed(2).replace(".", ",") + " €"; }
+
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function withKey(path) {
+  return path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
+}
+
+function effectiveStatus(key) {
+  const s = live[key];
+  if (s.override) return s.override;
+  return s.online ? 'on' : 'off';
+}
+
+function displayedTodayMs(key) {
+  const s = live[key];
+  const elapsedSincePoll = s.online ? (Date.now() - s.polledAt) : 0;
+  return s.todayMs + elapsedSincePoll;
+}
+
+async function boot(key) {
+  if (effectiveStatus(key) !== 'off') return;
+  live[key].override = 'booting';
+  live[key].overrideSince = Date.now();
+  toast(PC_META[key].name + " wird geweckt – gleich da.");
+  render();
+  try {
+    const res = await fetch(withKey('/wol?pc=' + key));
+    const data = await res.json();
+    if (!data.ok) { live[key].override = null; toast("Fehler beim Senden."); render(); }
+  } catch (e) {
+    live[key].override = null;
+    toast("Server nicht erreichbar.");
+    render();
+  }
+}
+
+async function shutdown(key) {
+  if (effectiveStatus(key) !== 'on') return;
+  live[key].override = 'shutting';
+  live[key].overrideSince = Date.now();
+  toast(PC_META[key].name + " fährt herunter …");
+  render();
+  try {
+    const res = await fetch(withKey('/shutdown?pc=' + key));
+    const data = await res.json();
+    if (!data.ok) { live[key].override = null; toast("Fehler beim Senden."); render(); }
+  } catch (e) {
+    live[key].override = null;
+    toast("Server nicht erreichbar.");
+    render();
+  }
+}
+
+function startHold(key) {
+  if (effectiveStatus(key) !== 'on') return;
+  hold = key;
+  holdPct = 0;
+  holdStart = performance.now();
+  const step = () => {
+    if (hold !== key) return;
+    holdPct = Math.min(1, (performance.now() - holdStart) / HOLD_MS);
+    render();
+    if (holdPct >= 1) {
+      hold = null; holdPct = 0;
+      shutdown(key);
+      return;
+    }
+    holdRaf = requestAnimationFrame(step);
+  };
+  holdRaf = requestAnimationFrame(step);
+}
+function endHold() {
+  if (hold) {
+    if (holdPct < 1) toast("Weiter halten, um herunterzufahren.");
+    cancelAnimationFrame(holdRaf);
+    hold = null; holdPct = 0;
+    render();
+  }
+}
+
+function buildCard(key) {
+  const meta = PC_META[key];
+  const status = effectiveStatus(key);
+  const s = live[key];
+  const ms = displayedTodayMs(key);
+  const liveOn = status === 'on' || status === 'shutting';
+  const kwh = (config[key + 'Watt']) / 1000;
+  const cost = (ms / H) * kwh * config.kwhPrice;
+  const weekMs = history.reduce((a, d) => a + (d[key + 'Ms'] || 0), 0) + ms;
+
+  const nets = {
+    on: ['online', 'var(--ok)', 'rgba(127,211,154,.12)'],
+    off: ['erreichbar', 'rgba(233,233,237,.6)', 'rgba(255,255,255,.06)'],
+    booting: ['startet', meta.color, 'rgba(255,255,255,.08)'],
+    shutting: ['fährt runter', 'var(--warn)', 'rgba(224,160,91,.12)']
+  };
+  const [netLabel, netColor, netBg] = nets[status];
+
+  const sinceStr = s.sessionSince ? new Date(s.sessionSince).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '–';
+  const statusLines = {
+    on: 'läuft seit ' + sinceStr + ' Uhr',
+    off: 'aus – bereit zum Wecken',
+    booting: 'startet gerade …',
+    shutting: 'fährt herunter …'
+  };
+
+  const holding = hold === key;
+  const labels = {
+    on: holding ? 'Halten … ' + Math.round(holdPct * 100) + '%' : 'Halten zum Herunterfahren',
+    off: 'Hochfahren',
+    booting: 'Startet …',
+    shutting: 'Fährt herunter …'
+  };
+  const btnOff = status === 'off';
+  const btnEdge = btnOff ? meta.color : 'rgba(255,255,255,.14)';
+  const btnColor = btnOff ? meta.color : 'var(--ink)';
+  const btnBg = btnOff ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.02)';
+  const fillWidth = holding ? (holdPct * 100).toFixed(1) + '%' : '0%';
+  const busy = status === 'booting' || status === 'shutting';
+
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="rail" style="background:linear-gradient(to right, ${meta.color}, transparent 78%); opacity:${liveOn ? 1 : 0.3}"></div>
+    <div class="head">
+      <div class="chip" style="background:${meta.chipBg}; box-shadow:inset 0 0 0 1px ${meta.chipEdge}; color:${meta.color}">${PC_ICON}</div>
+      <div style="flex:1;min-width:0">
+        <div class="name">${meta.name}</div>
+        <div class="status-row">
+          <span class="dot" style="background:${status === 'on' ? 'var(--ok)' : busy ? meta.color : 'rgba(233,233,237,.3)'}; box-shadow:0 0 8px ${status === 'on' ? 'var(--ok)' : 'transparent'}"></span>
+          <span class="status-text">${statusLines[status]}</span>
+        </div>
+      </div>
+      <div class="net" style="color:${netColor}; background:${netBg}">${netLabel}</div>
+    </div>
+    <div class="clock-row">
+      <div class="clock mono" style="color:${liveOn ? 'var(--ink)' : 'rgba(233,233,237,.35)'}">${fmtClock(ms)}</div>
+      <div class="clock-note">${liveOn ? 'heute gelaufen' : 'heute gelaufen, jetzt aus'}</div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><div class="label">Verbrauch</div><div class="value mono">${status === 'on' ? Math.round(kwh * 1000) + ' W' : '0 W'}</div></div>
+      <div class="tile"><div class="label">Kosten heute</div><div class="value mono">${fmtEur(cost)}</div></div>
+      <div class="tile"><div class="label">7 Tage</div><div class="value mono">${fmtHours(weekMs)}</div></div>
+    </div>
+    <button class="action" style="border-color:${btnEdge}; background:${btnBg}; color:${btnColor}" ${busy ? 'disabled' : ''}>
+      <span class="fill" style="background:${meta.color}; width:${fillWidth}"></span>
+      <span class="label">${labels[status]}</span>
+    </button>
+  `;
+  const btn = el.querySelector('button');
+  btn.addEventListener('pointerdown', () => startHold(key));
+  btn.addEventListener('pointerup', endHold);
+  btn.addEventListener('pointerleave', endHold);
+  btn.addEventListener('click', () => { if (effectiveStatus(key) === 'off') boot(key); });
+  return { el, cost };
+}
+
+function buildBars() {
+  const names = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const today = new Date().getDay();
+  const dayNames = Array.from({ length: 7 }, (_, i) => names[(today + 6 + i) % 7]);
+
+  const pastSix = history.slice(-6);
+  while (pastSix.length < 6) pastSix.unshift({ fineMs: 0, liamMs: 0 });
+
+  const fine = pastSix.map(d => d.fineMs / H).concat([displayedTodayMs('fine') / H]);
+  const liam = pastSix.map(d => d.liamMs / H).concat([displayedTodayMs('liam') / H]);
+  const max = Math.max(12, ...fine, ...liam);
+
+  const bars = document.getElementById('bars');
+  bars.innerHTML = '';
+  dayNames.forEach((label, i) => {
+    const finePx = Math.max(3, Math.round((fine[i] / max) * 82));
+    const liamPx = Math.max(3, Math.round((liam[i] / max) * 82));
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.innerHTML = `
+      <div class="bar-pair">
+        <div class="bar" style="height:${finePx}px;background:linear-gradient(180deg,#6fa2e6,#3f6ba8)"></div>
+        <div class="bar" style="height:${liamPx}px;background:linear-gradient(180deg,#eda765,#a86f3c)"></div>
+      </div>
+      <div class="bar-day-label" style="color:${i === 6 ? 'rgba(233,233,237,.75)' : 'rgba(233,233,237,.35)'}">${label}</div>
+    `;
+    bars.appendChild(col);
+  });
+
+  const totalH = fine.reduce((a, b) => a + b, 0) + liam.reduce((a, b) => a + b, 0);
+  document.getElementById('avgPerDay').textContent = 'Ø ' + fmtHours((totalH / 7) * H) + ' pro Tag';
+  const weekKwh = fine.reduce((a, b) => a + b, 0) * (config.fineWatt / 1000) + liam.reduce((a, b) => a + b, 0) * (config.liamWatt / 1000);
+  document.getElementById('weekCost').textContent = fmtEur(weekKwh * config.kwhPrice) + ' Strom diese Woche';
+}
+
+// --- Update-UI ---
+
+function buildGhostButton() {
+  const slot = document.getElementById('ghostUpdateSlot');
+  slot.innerHTML = '';
+  if (upd.pending && !upd.open) {
+    const btn = document.createElement('button');
+    btn.className = 'ghost-update';
+    btn.textContent = 'Update ' + upd.latestVersion + ' installieren';
+    btn.addEventListener('click', () => { upd.open = true; render(); });
+    slot.appendChild(btn);
+  }
+}
+
+function buildModal() {
+  const slot = document.getElementById('modalSlot');
+  slot.innerHTML = '';
+  if (!upd.open) return;
+
+  const busy = upd.phase === 'downloading' || upd.phase === 'installing';
+  const done = upd.phase === 'done';
+  const cta = busy ? 'Bitte warten …' : (done ? 'Fertig' : 'Jetzt installieren');
+  const statusMsg = upd.phase === 'installing' ? 'Wird installiert …' : upd.message;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-chip">${UPDATE_ICON}</div>
+        <div style="flex:1">
+          <div class="name">Update verfügbar</div>
+          <div class="sub mono">${upd.latestVersion} · aktuell ${upd.currentVersion}</div>
+        </div>
+        <span class="tag-new">Neu</span>
+      </div>
+      <div class="modal-intro">Das gibt's Neues:</div>
+      <div class="modal-notes">
+        ${(upd.notes.length ? upd.notes : ['Details siehe GitHub-Release.']).map(n => `<div><span class="dash">—</span><span>${n}</span></div>`).join('')}
+      </div>
+      ${(busy || done) ? `
+        <div>
+          <div class="progress-track"><div class="progress-fill" style="width:${Math.round(upd.pct * 100)}%"></div></div>
+          <div class="progress-msg mono">${statusMsg}</div>
+        </div>` : ''}
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" id="updDismiss" ${busy ? 'disabled' : ''}>Später</button>
+        <button class="btn btn-primary" id="updInstall" ${(busy || done) ? 'disabled' : ''}>${cta}</button>
+      </div>
+      <div class="modal-foot">Läuft im Hintergrund — deine PCs bleiben an</div>
+    </div>
+  `;
+  slot.appendChild(backdrop);
+  backdrop.querySelector('#updDismiss').addEventListener('click', () => {
+    upd.open = false;
+    upd.dismissedVersion = upd.latestVersion;
+    toast('Okay, erinnere dich später.');
+    render();
+  });
+  backdrop.querySelector('#updInstall').addEventListener('click', installUpdate);
+}
+
+async function checkForUpdate() {
+  try {
+    const res = await fetch(withKey('/update/check'));
+    const data = await res.json();
+    if (!data.ok) return;
+    upd.currentVersion = data.currentVersion;
+    upd.latestVersion = data.latestVersion;
+    upd.notes = data.notes || [];
+    upd.pending = data.available;
+    if (data.available && data.latestVersion !== upd.dismissedVersion && upd.phase === 'idle') {
+      upd.open = true;
+    }
+    render();
+  } catch (e) { /* still fine, just no update-info this round */ }
+}
+
+async function installUpdate() {
+  if (upd.phase !== 'idle') return;
+  try {
+    const res = await fetch(withKey('/update/install'));
+    const data = await res.json();
+    if (!data.ok) { toast(data.error === 'no update available' ? 'Bereits aktuell.' : 'Update konnte nicht gestartet werden.'); return; }
+    upd.phase = 'downloading'; upd.pct = 0; upd.message = 'Starte …';
+    render();
+    pollProgress();
+  } catch (e) {
+    toast('Server nicht erreichbar.');
+  }
+}
+
+function pollProgress() {
+  clearInterval(progressTimer);
+  progressTimer = setInterval(async () => {
+    try {
+      const res = await fetch(withKey('/update/progress'));
+      const data = await res.json();
+      upd.phase = data.phase; upd.pct = data.pct; upd.message = data.message;
+      render();
+      if (data.phase === 'done') {
+        clearInterval(progressTimer);
+        waitForRestart();
+      } else if (data.phase === 'error') {
+        clearInterval(progressTimer);
+        toast('Update fehlgeschlagen: ' + data.message);
+        upd.phase = 'idle'; render();
+      }
+    } catch (e) {
+      // Server startet gerade neu - normal waehrend "done"
+    }
+  }, 700);
+}
+
+async function waitForRestart() {
+  const start = Date.now();
+  while (Date.now() - start < 30000) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const res = await fetch(withKey('/stats'), { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        toast('Update installiert – v' + data.version + ' läuft.');
+        upd.phase = 'idle'; upd.open = false; upd.pending = false;
+        render();
+        poll();
+        return;
+      }
+    } catch (e) { /* server noch nicht wieder da */ }
+  }
+  toast('Update evtl. fehlgeschlagen – bitte Seite neu laden.');
+  upd.phase = 'idle'; render();
+}
+
+function render() {
+  const cardsEl = document.getElementById('cards');
+  cardsEl.innerHTML = '';
+  cardsEl.style.display = 'flex';
+  cardsEl.style.flexDirection = 'column';
+  cardsEl.style.gap = '14px';
+  let totalCost = 0;
+  for (const key of ['fine', 'liam']) {
+    const { el, cost } = buildCard(key);
+    cardsEl.appendChild(el);
+    totalCost += cost;
+  }
+  document.getElementById('totalCostToday').textContent = fmtEur(totalCost);
+  buildBars();
+  buildGhostButton();
+  buildModal();
+  document.getElementById('hint').textContent =
+    'Strompreis ' + config.kwhPrice.toFixed(2).replace('.', ',') + ' €/kWh · Fernzugriff über Tailscale';
+}
+
+function clearStaleOverride(key) {
+  const s = live[key];
+  if (!s.override) return;
+  const age = Date.now() - s.overrideSince;
+  if (s.override === 'booting' && (s.online || age > BOOT_TIMEOUT_MS)) {
+    if (!s.online) toast(PC_META[key].name + ": keine Antwort – bitte prüfen.");
+    s.override = null;
+  }
+  if (s.override === 'shutting' && (!s.online || age > SHUTDOWN_TIMEOUT_MS)) {
+    if (s.online) toast(PC_META[key].name + ": keine Antwort – bitte prüfen.");
+    s.override = null;
+  }
+}
+
+async function poll() {
+  try {
+    const res = await fetch(withKey('/stats'), { cache: 'no-store' });
+    const data = await res.json();
+    const at = Date.now();
+    for (const key of ['fine', 'liam']) {
+      const wasOnline = live[key].online;
+      Object.assign(live[key], data[key], { polledAt: at });
+      if (!wasOnline && data[key].online && live[key].override === 'booting') {
+        toast(PC_META[key].name + ' ist online.');
+      }
+      if (wasOnline && !data[key].online && live[key].override === 'shutting') {
+        toast(PC_META[key].name + ' ist aus. Gute Nacht.');
+      }
+      clearStaleOverride(key);
+    }
+    history = data.history || [];
+    config = data.config || config;
+  } catch (e) {
+    toast('Server nicht erreichbar – Tailscale aktiv?');
+  }
+  render();
+}
+
+if (!KEY) {
+  document.getElementById('screen').innerHTML = '<div class="hint" style="padding-top:40vh">Kein Key in der URL. Bitte den vollständigen Link mit ?key=... öffnen.</div>';
+} else {
+  render();
+  poll();
+  checkForUpdate();
+  setInterval(poll, POLL_MS);
+  setInterval(render, 1000);
+  setInterval(checkForUpdate, UPDATE_CHECK_MS);
+}
+</script>
+</body>
+</html>
