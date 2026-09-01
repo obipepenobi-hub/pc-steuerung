@@ -12,7 +12,7 @@ import py_compile
 import urllib.request
 import urllib.error
 
-VERSION = "2.4.1"
+VERSION = "2.4.2"
 GITHUB_REPO = "obipepenobi-hub/pc-steuerung"
 
 SCRIPT_PATH = os.path.abspath(__file__)
@@ -215,7 +215,13 @@ def do_update(tag):
         with update_lock:
             update_state.update(phase='done', pct=1.0, message='Fertig, starte neu …')
         time.sleep(1.5)
-        os.execv(sys.executable, [sys.executable, SCRIPT_PATH])
+        if os.name == 'nt':
+            # os.execv verschluckt sich unter Windows an Leerzeichen im Pfad
+            # (nicht relevant auf Termux/Linux, aber so bleibt es testbar).
+            subprocess.Popen([sys.executable, SCRIPT_PATH])
+            os._exit(0)
+        else:
+            os.execv(sys.executable, [sys.executable, SCRIPT_PATH])
     except Exception as e:
         with update_lock:
             update_state.update(phase='error', message=str(e))
